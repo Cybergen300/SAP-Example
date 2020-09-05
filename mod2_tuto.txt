@@ -1,0 +1,44 @@
+Sub UpdateCC(control As IRibbonControl)
+    
+    Dim TMPSelFile As Variant
+    Dim tab1(500, 2)
+
+    '================================
+    'ask user to choose a source file
+    '================================
+
+    TMPSelFile = Application.GetOpenFilename
+
+
+    '==============================================================
+    'Open the source file and take the values from the source file
+    '==============================================================
+
+    Workbooks.Open TMPSelFile
+
+    last_row = Cells(1, 1).End(xlDown).Row
+    'Debug.Print last_row
+
+    For i = 1 To last_row
+        tab1(i, 0) = Cells(i, 1).Value
+        tab1(i, 1) = Cells(i, 2).Value
+    Next i
+
+
+    '===================================================================================
+    'Goes back to the cost files and update the running cost with the latest SAP values
+    '===================================================================================
+    ActiveWorkbook.Close
+
+    last_row1 = Cells(5, 3).End(xlDown).Row
+    'Debug.Print last_row1
+
+    For i = 1 To last_row1
+        For n = 1 To last_row
+            If InStr(tab1(n, 0), Cells(i, 2).Value) Then
+                Cells(i, 7).Value = tab1(n, 1)
+            End If
+        Next n
+    Next i
+    
+End Sub

@@ -1,0 +1,1255 @@
+'Variable declaration
+
+Public SapGuiAuto, WScript, msgcol
+Public objGui  As GuiApplication
+Public objConn As GuiConnection
+Public objSess As GuiSession
+Public objSBar As GuiStatusbar
+Public objSheet As Worksheet
+Dim W_System
+Const fpath = "d:\My Documents\knowledgebase\GUI Scripting"
+Const ffilename = "crm.txt"
+
+'================================================================================
+'Function enbaling us to be able to connect to our SAP GUI session
+'================================================================================
+
+Function Attach_Session() As Boolean
+Dim il, it
+Dim W_conn, W_Sess
+
+If W_System = "" Then
+   Attach_Session = False
+   Exit Function
+End If
+
+If Not objSess Is Nothing Then
+    If objSess.Info.SystemName & objSess.Info.Client = W_System Then
+        Attach_Session = True
+        Exit Function
+    End If
+End If
+
+If objGui Is Nothing Then
+   Set SapGuiAuto = GetObject("SAPGUI")
+   Set objGui = SapGuiAuto.GetScriptingEngine
+End If
+
+For il = 0 To objGui.Children.Count - 1
+    Set W_conn = objGui.Children(il + 0)
+    For it = 0 To W_conn.Children.Count - 1
+        Set W_Sess = W_conn.Children(it + 0)
+        If W_Sess.Info.SystemName & W_Sess.Info.Client = W_System Then
+            Set objConn = objGui.Children(il + 0)
+            Set objSess = objConn.Children(it + 0)
+            Exit For
+        End If
+    Next
+Next
+
+If objSess Is Nothing Then
+   MsgBox "No active session to system " + W_System + ", or scripting is not enabled.", vbCritical + vbOKOnly
+   Attach_Session = False
+   Exit Function
+End If
+
+If IsObject(WScript) Then
+   WScript.ConnectObject objSess, "on"
+   WScript.ConnectObject objGui, "on"
+End If
+
+Set objSBar = objSess.findById("wnd[0]/sbar")
+objSess.findById("wnd[0]").maximize
+Attach_Session = True
+
+
+End Function
+
+'============================================================
+'Calculate the number of item indicated in the Index CC sheet
+'============================================================
+
+Sub NbItemCombo(control As IRibbonControl, ByRef returnedVal)
+    'Define the number of elements in the ComboBox
+    returnedVal = Sheets("CC_Corp").Range("A65536").End(xlUp).Row
+
+End Sub
+
+'====================================================================
+'Populate our Corp Affairs comboBox control with the CC_Index values
+'====================================================================
+
+Sub ComboLabel(control As IRibbonControl, index As Integer, ByRef returnedVal)
+    
+    If Sheets("CC_Corp").Range("A65536").End(xlUp).Row = 0 Then Exit Sub
+    
+    returnedVal = Sheets("CC_Corp").Cells(index + 2, 1)
+End Sub
+
+'========================================================================================================
+'Extract the wanted form from SAP with the help of the SAP GUI script recorded by the SAP script recorder
+'========================================================================================================
+
+Sub ExtractCorpo(control As IRibbonControl, text As String)
+    
+    ' Set the sid and client to connect to
+    W_System = "######"
+    
+    Dim W_Ret As Boolean
+
+
+    ' Connect to SAP
+    W_Ret = Attach_Session
+    If Not W_Ret Then
+        Exit Sub
+    End If
+    
+    
+    On Error GoTo myerr
+    
+    '===========================================================
+    'SAP GUI Scripts for Corporate Affairs CC extracts
+    '===========================================================
+    
+    
+    If text = "######" Then
+        
+        objSess.findById("wnd[0]").maximize
+        objSess.findById("wnd[0]/usr/cntlIMAGE_CONTAINER/shellcont/shell/shellcont[0]/shell").selectedNode = "F00067"
+        objSess.findById("wnd[0]/usr/cntlIMAGE_CONTAINER/shellcont/shell/shellcont[0]/shell").doubleClickNode "F00067"
+        objSess.findById("wnd[0]/usr/ctxt$1PERIB").text = "7"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").text = "######"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").SetFocus
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").caretPosition = 8
+        objSess.findById("wnd[0]").sendVKey 8
+        objSess.findById("wnd[0]/usr/lbl[0,47]").SetFocus
+        objSess.findById("wnd[0]/usr/lbl[0,47]").caretPosition = 0
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]/usr/lbl[0,36]").SetFocus
+        objSess.findById("wnd[0]/usr/lbl[0,36]").caretPosition = 0
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]/tbar[1]/btn[14]").press
+        objSess.findById("wnd[1]/usr/ctxtLGRWO-OUT_FILE").text = "test_extract"
+        objSess.findById("wnd[1]/tbar[0]/btn[0]").press
+        objSess.findById("wnd[2]/usr/btnSPOP-VAROPTION2").press
+        objSess.findById("wnd[1]/usr/btnSPOP-VAROPTION1").press
+        objSess.findById("wnd[0]/tbar[0]/btn[15]").press
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").Selected = False
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").SetFocus
+        objSess.findById("wnd[1]/usr/btnBUTTON_YES").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+        
+    ElseIf text = "######" Then
+        
+        objSess.findById("wnd[0]").maximize
+        objSess.findById("wnd[0]/usr/cntlIMAGE_CONTAINER/shellcont/shell/shellcont[0]/shell").doubleClickNode "F00067"
+        objSess.findById("wnd[0]/usr/ctxt$1PERIB").text = "7"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").text = "#######"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").SetFocus
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").caretPosition = 8
+        objSess.findById("wnd[0]").sendVKey 8
+        objSess.findById("wnd[0]/usr/lbl[0,27]").SetFocus
+        objSess.findById("wnd[0]/usr/lbl[0,27]").caretPosition = 0
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]/tbar[1]/btn[14]").press
+        objSess.findById("wnd[1]/usr/ctxtLGRWO-OUT_FILE").text = "test_extract"
+        objSess.findById("wnd[1]/tbar[0]/btn[0]").press
+        objSess.findById("wnd[2]/usr/btnSPOP-VAROPTION2").press
+        objSess.findById("wnd[1]/usr/btnSPOP-VAROPTION1").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").Selected = False
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").SetFocus
+        objSess.findById("wnd[1]/usr/btnBUTTON_YES").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+        
+    ElseIf text = "######" Then
+        objSess.findById("wnd[0]").maximize
+        objSess.findById("wnd[0]/usr/cntlIMAGE_CONTAINER/shellcont/shell/shellcont[0]/shell").doubleClickNode "F00067"
+        objSess.findById("wnd[0]/usr/ctxt$1PERIB").text = "7"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").text = "######"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").SetFocus
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").caretPosition = 8
+        objSess.findById("wnd[0]").sendVKey 8
+        objSess.findById("wnd[0]/usr/lbl[0,9]").SetFocus
+        objSess.findById("wnd[0]/usr/lbl[0,9]").caretPosition = 0
+        objSess.findById("wnd[0]/usr").verticalScrollbar.Position = 25
+        objSess.findById("wnd[0]/usr").verticalScrollbar.Position = 26
+        objSess.findById("wnd[0]/usr").verticalScrollbar.Position = 27
+        objSess.findById("wnd[0]/usr").verticalScrollbar.Position = 28
+        objSess.findById("wnd[0]/usr").verticalScrollbar.Position = 29
+        objSess.findById("wnd[0]/usr").verticalScrollbar.Position = 30
+        objSess.findById("wnd[0]/usr").verticalScrollbar.Position = 31
+        objSess.findById("wnd[0]/usr").verticalScrollbar.Position = 32
+        objSess.findById("wnd[0]/usr").verticalScrollbar.Position = 33
+        objSess.findById("wnd[0]/usr").verticalScrollbar.Position = 34
+        objSess.findById("wnd[0]/usr").verticalScrollbar.Position = 35
+        objSess.findById("wnd[0]/usr").verticalScrollbar.Position = 36
+        objSess.findById("wnd[0]/usr").verticalScrollbar.Position = 37
+        objSess.findById("wnd[0]/usr").verticalScrollbar.Position = 38
+        objSess.findById("wnd[0]/usr").verticalScrollbar.Position = 61
+        objSess.findById("wnd[0]/usr/lbl[0,40]").SetFocus
+        objSess.findById("wnd[0]/usr/lbl[0,40]").caretPosition = 0
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]/usr/lbl[0,36]").SetFocus
+        objSess.findById("wnd[0]/usr/lbl[0,36]").caretPosition = 0
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]/tbar[1]/btn[14]").press
+        objSess.findById("wnd[1]/usr/ctxtLGRWO-OUT_FILE").text = "test_extract"
+        objSess.findById("wnd[1]/tbar[0]/btn[0]").press
+        objSess.findById("wnd[2]/usr/btnSPOP-VAROPTION2").press
+        objSess.findById("wnd[1]/usr/btnSPOP-VAROPTION1").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").Selected = False
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").SetFocus
+        objSess.findById("wnd[1]/usr/btnBUTTON_YES").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+                
+    ElseIf text = "######" Then
+    
+        objSess.findById("wnd[0]").maximize
+        objSess.findById("wnd[0]/usr/cntlIMAGE_CONTAINER/shellcont/shell/shellcont[0]/shell").selectedNode = "F00067"
+        objSess.findById("wnd[0]/usr/cntlIMAGE_CONTAINER/shellcont/shell/shellcont[0]/shell").doubleClickNode "F00067"
+        objSess.findById("wnd[0]/usr/ctxt$1PERIB").text = "7"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").text = "#######"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").SetFocus
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").caretPosition = 8
+        objSess.findById("wnd[0]").sendVKey 8
+        objSess.findById("wnd[0]/usr/lbl[0,47]").SetFocus
+        objSess.findById("wnd[0]/usr/lbl[0,47]").caretPosition = 0
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]/usr/lbl[0,36]").SetFocus
+        objSess.findById("wnd[0]/usr/lbl[0,36]").caretPosition = 0
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]/tbar[1]/btn[14]").press
+        objSess.findById("wnd[1]/usr/ctxtLGRWO-OUT_FILE").text = "test_extract"
+        objSess.findById("wnd[1]/tbar[0]/btn[0]").press
+        objSess.findById("wnd[2]/usr/btnSPOP-VAROPTION2").press
+        objSess.findById("wnd[1]/usr/btnSPOP-VAROPTION1").press
+        objSess.findById("wnd[0]/tbar[0]/btn[15]").press
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").Selected = False
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").SetFocus
+        objSess.findById("wnd[1]/usr/btnBUTTON_YES").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+        
+    ElseIf text = "#######" Then
+        objSess.findById("wnd[0]").maximize
+        objSess.findById("wnd[0]/usr/cntlIMAGE_CONTAINER/shellcont/shell/shellcont[0]/shell").doubleClickNode "F00067"
+        objSess.findById("wnd[0]/usr/ctxt$1PERIB").text = "7"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").text = "#######"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").SetFocus
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").caretPosition = 8
+        objSess.findById("wnd[0]").sendVKey 8
+        objSess.findById("wnd[0]/usr/lbl[0,23]").SetFocus
+        objSess.findById("wnd[0]/usr/lbl[0,23]").caretPosition = 0
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]/tbar[1]/btn[14]").press
+        objSess.findById("wnd[1]/usr/ctxtLGRWO-OUT_FILE").text = "test_extract"
+        objSess.findById("wnd[1]/tbar[0]/btn[0]").press
+        objSess.findById("wnd[2]/usr/btnSPOP-VAROPTION2").press
+        objSess.findById("wnd[1]/usr/btnSPOP-VAROPTION1").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").Selected = False
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").SetFocus
+        objSess.findById("wnd[1]/usr/btnBUTTON_YES").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+    
+    ElseIf text = "#######" Then
+        objSess.findById("wnd[0]").maximize
+        objSess.findById("wnd[0]/usr/cntlIMAGE_CONTAINER/shellcont/shell/shellcont[0]/shell").doubleClickNode "F00067"
+        objSess.findById("wnd[0]/usr/ctxt$1PERIB").text = "7"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").text = "######"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").SetFocus
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").caretPosition = 8
+        objSess.findById("wnd[0]").sendVKey 8
+        objSess.findById("wnd[0]/usr/lbl[0,29]").SetFocus
+        objSess.findById("wnd[0]/usr/lbl[0,29]").caretPosition = 0
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]/tbar[1]/btn[14]").press
+        objSess.findById("wnd[1]/usr/ctxtLGRWO-OUT_FILE").text = "test_extract"
+        objSess.findById("wnd[1]/tbar[0]/btn[0]").press
+        objSess.findById("wnd[2]/usr/btnSPOP-VAROPTION2").press
+        objSess.findById("wnd[1]/usr/btnSPOP-VAROPTION1").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").Selected = False
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").SetFocus
+        objSess.findById("wnd[1]/usr/btnBUTTON_YES").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+        
+    
+    ElseIf text = "#######" Then
+
+        objSess.findById("wnd[0]").maximize
+        objSess.findById("wnd[0]/usr/cntlIMAGE_CONTAINER/shellcont/shell/shellcont[0]/shell").doubleClickNode "F00067"
+        objSess.findById("wnd[0]/usr/ctxt$1PERIB").text = "7"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").text = "#######"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").SetFocus
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").caretPosition = 8
+        objSess.findById("wnd[0]").sendVKey 8
+        objSess.findById("wnd[0]/usr/lbl[0,25]").SetFocus
+        objSess.findById("wnd[0]/usr/lbl[0,25]").caretPosition = 0
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]/tbar[1]/btn[14]").press
+        objSess.findById("wnd[1]/usr/ctxtLGRWO-OUT_FILE").text = "test_extract"
+        objSess.findById("wnd[1]/usr/ctxtLGRWO-OUT_FILE").SetFocus
+        objSess.findById("wnd[1]/usr/ctxtLGRWO-OUT_FILE").caretPosition = 12
+        objSess.findById("wnd[1]/tbar[0]/btn[0]").press
+        objSess.findById("wnd[2]/usr/btnSPOP-VAROPTION2").press
+        objSess.findById("wnd[1]/usr/btnSPOP-VAROPTION1").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").Selected = False
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").SetFocus
+        objSess.findById("wnd[1]/usr/btnBUTTON_YES").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+    
+    ElseIf text = "#######" Then
+        objSess.findById("wnd[0]").maximize
+        objSess.findById("wnd[0]/usr/cntlIMAGE_CONTAINER/shellcont/shell/shellcont[0]/shell").doubleClickNode "F00067"
+        objSess.findById("wnd[0]/usr/ctxt$1PERIB").text = "7"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").text = "#######"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").SetFocus
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").caretPosition = 8
+        objSess.findById("wnd[0]").sendVKey 8
+        objSess.findById("wnd[0]/usr").verticalScrollbar.Position = 53
+        objSess.findById("wnd[0]/usr/lbl[0,40]").SetFocus
+        objSess.findById("wnd[0]/usr/lbl[0,40]").caretPosition = 0
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]/usr/lbl[0,36]").SetFocus
+        objSess.findById("wnd[0]/usr/lbl[0,36]").caretPosition = 0
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]/tbar[1]/btn[14]").press
+        objSess.findById("wnd[1]/usr/ctxtLGRWO-OUT_FILE").text = "test_extract"
+        objSess.findById("wnd[1]/tbar[0]/btn[0]").press
+        objSess.findById("wnd[2]/usr/btnSPOP-VAROPTION2").press
+        objSess.findById("wnd[1]/usr/btnSPOP-VAROPTION1").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").Selected = False
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").SetFocus
+        objSess.findById("wnd[1]/usr/btnBUTTON_YES").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+    
+    ElseIf text = "#######" Then
+        
+        objSess.findById("wnd[0]").maximize
+        objSess.findById("wnd[0]/usr/cntlIMAGE_CONTAINER/shellcont/shell/shellcont[0]/shell").doubleClickNode "F00067"
+        objSess.findById("wnd[0]/usr/ctxt$1PERIB").text = "7"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").text = "#######"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").SetFocus
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").caretPosition = 8
+        objSess.findById("wnd[0]").sendVKey 8
+        objSess.findById("wnd[0]/usr/lbl[0,27]").SetFocus
+        objSess.findById("wnd[0]/usr/lbl[0,27]").caretPosition = 0
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]/tbar[1]/btn[14]").press
+        objSess.findById("wnd[1]/usr/ctxtLGRWO-OUT_FILE").text = "test_extract"
+        objSess.findById("wnd[1]/tbar[0]/btn[0]").press
+        objSess.findById("wnd[2]/usr/btnSPOP-VAROPTION2").press
+        objSess.findById("wnd[1]/usr/btnSPOP-VAROPTION1").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").Selected = False
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").SetFocus
+        objSess.findById("wnd[1]/usr/btnBUTTON_YES").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+
+    ElseIf text = "#######" Then
+        
+        objSess.findById("wnd[0]").maximize
+        objSess.findById("wnd[0]/usr/cntlIMAGE_CONTAINER/shellcont/shell/shellcont[0]/shell").doubleClickNode "F00067"
+        objSess.findById("wnd[0]/usr/ctxt$1PERIB").text = "7"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").text = "#######"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").SetFocus
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").caretPosition = 8
+        objSess.findById("wnd[0]").sendVKey 8
+        objSess.findById("wnd[0]/usr/lbl[0,35]").SetFocus
+        objSess.findById("wnd[0]/usr/lbl[0,35]").caretPosition = 0
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]/tbar[1]/btn[14]").press
+        objSess.findById("wnd[1]/usr/ctxtLGRWO-OUT_FILE").text = "test_extract"
+        objSess.findById("wnd[1]/tbar[0]/btn[0]").press
+        objSess.findById("wnd[2]/usr/btnSPOP-VAROPTION2").press
+        objSess.findById("wnd[1]/usr/btnSPOP-VAROPTION1").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").Selected = False
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").SetFocus
+        objSess.findById("wnd[1]/usr/btnBUTTON_YES").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+        
+    ElseIf text = "#######" Then
+        objSess.findById("wnd[0]").maximize
+        objSess.findById("wnd[0]/usr/cntlIMAGE_CONTAINER/shellcont/shell/shellcont[0]/shell").doubleClickNode "F00067"
+        objSess.findById("wnd[0]/usr/ctxt$1PERIB").text = "7"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").text = "#######"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").SetFocus
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").caretPosition = 8
+        objSess.findById("wnd[0]").sendVKey 8
+        objSess.findById("wnd[0]/usr/lbl[0,29]").SetFocus
+        objSess.findById("wnd[0]/usr/lbl[0,29]").caretPosition = 0
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]/tbar[1]/btn[14]").press
+        objSess.findById("wnd[1]/usr/ctxtLGRWO-OUT_FILE").text = "test_extract"
+        objSess.findById("wnd[1]/tbar[0]/btn[0]").press
+        objSess.findById("wnd[2]/usr/btnSPOP-VAROPTION2").press
+        objSess.findById("wnd[1]/usr/btnSPOP-VAROPTION1").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").Selected = False
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").SetFocus
+        objSess.findById("wnd[1]/usr/btnBUTTON_YES").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+        
+    End If
+
+Exit Sub
+    
+myerr:
+       MsgBox "Error occured while retrieving data", vbCritical + vbOKOnly
+        
+    
+    
+    ' End the GUI session
+    objSess.EndTransaction
+    
+End Sub
+
+'================================================================
+'Calculate the number of item indicated in the Index CC_fin sheet
+'================================================================
+
+Sub NbItemCombo1(control As IRibbonControl, ByRef returnedVal1)
+    'Define the number of elements in the ComboBox
+    returnedVal1 = Sheets("CC_Fin").Range("A65536").End(xlUp).Row
+
+End Sub
+
+'====================================================================
+'Populate our Finance comboBox control with the CC_Fin  values
+'====================================================================
+
+Sub ComboLabel1(control As IRibbonControl, index1 As Integer, ByRef returnedVal1)
+    
+    If Sheets("CC_Fin").Range("A65536").End(xlUp).Row = 0 Then Exit Sub
+    
+    returnedVal1 = Sheets("CC_Fin").Cells(index1 + 2, 1)
+End Sub
+
+'========================================================================================================
+'Extract the wanted form from SAP with the help of the SAP GUI script recorded by the SAP script recorder
+'========================================================================================================
+
+Sub ExtractFin(control As IRibbonControl, text As String)
+    
+    ' Set the sid and client to connect to
+    W_System = "######"
+    
+    Dim W_Ret As Boolean
+
+
+    ' Connect to SAP
+    W_Ret = Attach_Session
+    If Not W_Ret Then
+        Exit Sub
+    End If
+    
+    
+    On Error GoTo myerr
+    
+    '===========================================================
+    'SAP GUI Scripts for Finance CC extracts
+    '===========================================================
+    
+    If text = "#######" Then
+        objSess.findById("wnd[0]").maximize
+        objSess.findById("wnd[0]/usr/cntlIMAGE_CONTAINER/shellcont/shell/shellcont[0]/shell").selectedNode = "F00067"
+        objSess.findById("wnd[0]/usr/cntlIMAGE_CONTAINER/shellcont/shell/shellcont[0]/shell").doubleClickNode "F00067"
+        objSess.findById("wnd[0]/usr/ctxt$1PERIB").text = "7"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").text = "#######"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").SetFocus
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").caretPosition = 8
+        objSess.findById("wnd[0]").sendVKey 8
+        objSess.findById("wnd[0]/usr/lbl[0,39]").SetFocus
+        objSess.findById("wnd[0]/usr/lbl[0,39]").caretPosition = 0
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]/usr/lbl[0,36]").SetFocus
+        objSess.findById("wnd[0]/usr/lbl[0,36]").caretPosition = 0
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]/tbar[1]/btn[14]").press
+        objSess.findById("wnd[1]/usr/ctxtLGRWO-OUT_FILE").text = "test_extract"
+        objSess.findById("wnd[1]/usr/ctxtLGRWO-OUT_FILE").SetFocus
+        objSess.findById("wnd[1]/usr/ctxtLGRWO-OUT_FILE").caretPosition = 12
+        objSess.findById("wnd[1]/tbar[0]/btn[0]").press
+        objSess.findById("wnd[2]/usr/btnSPOP-VAROPTION2").press
+        objSess.findById("wnd[1]/usr/btnSPOP-VAROPTION1").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").Selected = False
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").SetFocus
+        objSess.findById("wnd[1]/usr/btnBUTTON_YES").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+ 
+    
+    ElseIf text = "#######" Then
+        objSess.findById("wnd[0]").maximize
+        objSess.findById("wnd[0]/usr/cntlIMAGE_CONTAINER/shellcont/shell/shellcont[0]/shell").doubleClickNode "F00067"
+        objSess.findById("wnd[0]/usr/ctxt$1PERIB").text = "7"
+        objSess.findById("wnd[0]/usr/ctxt$1PERIB").SetFocus
+        objSess.findById("wnd[0]/usr/ctxt$1PERIB").caretPosition = 3
+        objSess.findById("wnd[0]").sendVKey 0
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").text = "#######"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").SetFocus
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").caretPosition = 8
+        objSess.findById("wnd[0]").sendVKey 8
+        objSess.findById("wnd[0]/usr").verticalScrollbar.Position = 67
+        objSess.findById("wnd[0]/usr/lbl[0,40]").SetFocus
+        objSess.findById("wnd[0]/usr/lbl[0,40]").caretPosition = 0
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]/usr/lbl[0,36]").SetFocus
+        objSess.findById("wnd[0]/usr/lbl[0,36]").caretPosition = 0
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]/tbar[1]/btn[14]").press
+        objSess.findById("wnd[1]/usr/ctxtLGRWO-OUT_FILE").text = "test_extract"
+        objSess.findById("wnd[1]/tbar[0]/btn[0]").press
+        objSess.findById("wnd[2]/usr/btnSPOP-VAROPTION2").press
+        objSess.findById("wnd[1]/usr/btnSPOP-VAROPTION1").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").Selected = False
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").SetFocus
+        objSess.findById("wnd[1]/usr/btnBUTTON_YES").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+            
+    
+    
+    End If
+    
+
+Exit Sub
+    
+myerr:
+       MsgBox "Error occured while retrieving data", vbCritical + vbOKOnly
+        
+    
+    
+    ' End the GUI session
+    objSess.EndTransaction
+    
+End Sub
+
+'===============================================================
+'Calculate the number of item indicated in the Index CC_IS sheet
+'===============================================================
+
+Sub NbItemCombo2(control As IRibbonControl, ByRef returnedVal2)
+    'Define the number of elements in the ComboBox
+    returnedVal2 = Sheets("CC_IS").Range("A65536").End(xlUp).Row
+
+End Sub
+
+
+'====================================================================
+'Populate our IS comboBox control with the CC_IS values
+'====================================================================
+
+Sub ComboLabel2(control As IRibbonControl, index1 As Integer, ByRef returnedVal2)
+    
+    If Sheets("CC_IS").Range("A65536").End(xlUp).Row = 0 Then Exit Sub
+    
+    returnedVal2 = Sheets("CC_IS").Cells(index1 + 2, 1)
+End Sub
+
+'========================================================================================================
+'Extract the wanted form from SAP with the help of the SAP GUI script recorded by the SAP script recorder
+'========================================================================================================
+
+Sub ExtractIS(control As IRibbonControl, text As String)
+    
+    ' Set the sid and client to connect to
+    W_System = "#######"
+    
+    Dim W_Ret As Boolean
+
+
+    ' Connect to SAP
+    W_Ret = Attach_Session
+    If Not W_Ret Then
+        Exit Sub
+    End If
+    
+    
+    On Error GoTo myerr
+
+    '===========================================================
+    'SAP GUI Scripts for IS CC extracts
+    '===========================================================
+    
+    If text = "#######" Then
+        objSess.findById("wnd[0]").maximize
+        objSess.findById("wnd[0]/usr/cntlIMAGE_CONTAINER/shellcont/shell/shellcont[0]/shell").doubleClickNode "F00067"
+        objSess.findById("wnd[0]/usr/ctxt$1PERIB").text = "7"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").text = "#######"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").SetFocus
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").caretPosition = 8
+        objSess.findById("wnd[0]").sendVKey 8
+        objSess.findById("wnd[0]/usr/lbl[0,47]").SetFocus
+        objSess.findById("wnd[0]/usr/lbl[0,47]").caretPosition = 0
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]/usr/lbl[0,36]").SetFocus
+        objSess.findById("wnd[0]/usr/lbl[0,36]").caretPosition = 0
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]/tbar[1]/btn[14]").press
+        objSess.findById("wnd[1]/usr/ctxtLGRWO-OUT_FILE").text = "test_extract"
+        objSess.findById("wnd[1]/tbar[0]/btn[0]").press
+        objSess.findById("wnd[2]/usr/btnSPOP-VAROPTION2").press
+        objSess.findById("wnd[1]/usr/btnSPOP-VAROPTION1").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").Selected = False
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").SetFocus
+        objSess.findById("wnd[1]/usr/btnBUTTON_YES").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+    
+    ElseIf text = "#######" Then
+    
+        objSess.findById("wnd[0]").maximize
+        objSess.findById("wnd[0]/usr/cntlIMAGE_CONTAINER/shellcont/shell/shellcont[0]/shell").doubleClickNode "F00067"
+        objSess.findById("wnd[0]/usr/ctxt$1PERIB").text = "7"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").text = "#######"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").SetFocus
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").caretPosition = 8
+        objSess.findById("wnd[0]").sendVKey 8
+        objSess.findById("wnd[0]/usr/lbl[0,35]").SetFocus
+        objSess.findById("wnd[0]/usr/lbl[0,35]").caretPosition = 0
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]/tbar[1]/btn[14]").press
+        objSess.findById("wnd[1]/usr/ctxtLGRWO-OUT_FILE").text = "test_extract"
+        objSess.findById("wnd[1]/tbar[0]/btn[0]").press
+        objSess.findById("wnd[2]/usr/btnSPOP-VAROPTION2").press
+        objSess.findById("wnd[1]/usr/btnSPOP-VAROPTION1").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").Selected = False
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").SetFocus
+        objSess.findById("wnd[1]/usr/btnBUTTON_YES").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+    
+    ElseIf text = "#######" Then
+    
+        objSess.findById("wnd[0]").maximize
+        objSess.findById("wnd[0]/usr/cntlIMAGE_CONTAINER/shellcont/shell/shellcont[0]/shell").doubleClickNode "F00067"
+        objSess.findById("wnd[0]/usr/ctxt$1PERIB").text = "7"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").text = "#######"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").SetFocus
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").caretPosition = 8
+        objSess.findById("wnd[0]").sendVKey 8
+        objSess.findById("wnd[0]/usr/lbl[0,27]").SetFocus
+        objSess.findById("wnd[0]/usr/lbl[0,27]").caretPosition = 0
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]/tbar[1]/btn[14]").press
+        objSess.findById("wnd[1]/usr/ctxtLGRWO-OUT_FILE").text = "test_extract"
+        objSess.findById("wnd[1]/tbar[0]/btn[0]").press
+        objSess.findById("wnd[2]/usr/btnSPOP-VAROPTION2").press
+        objSess.findById("wnd[1]/usr/btnSPOP-VAROPTION1").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").Selected = False
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").SetFocus
+        objSess.findById("wnd[1]/usr/btnBUTTON_YES").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+    
+    ElseIf text = "#######" Then
+    
+        objSess.findById("wnd[0]").maximize
+        objSess.findById("wnd[0]/usr/cntlIMAGE_CONTAINER/shellcont/shell/shellcont[0]/shell").doubleClickNode "F00067"
+        objSess.findById("wnd[0]/usr/ctxt$1PERIB").text = "7"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").text = "#######"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").SetFocus
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").caretPosition = 8
+        objSess.findById("wnd[0]").sendVKey 8
+        objSess.findById("wnd[0]/usr/lbl[0,25]").SetFocus
+        objSess.findById("wnd[0]/usr/lbl[0,25]").caretPosition = 0
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]/tbar[1]/btn[14]").press
+        objSess.findById("wnd[1]/usr/ctxtLGRWO-OUT_FILE").text = "test_extract"
+        objSess.findById("wnd[1]/tbar[0]/btn[0]").press
+        objSess.findById("wnd[2]/usr/btnSPOP-VAROPTION2").press
+        objSess.findById("wnd[1]/usr/btnSPOP-VAROPTION1").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").Selected = False
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").SetFocus
+        objSess.findById("wnd[1]/usr/btnBUTTON_YES").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+    
+    ElseIf text = "#######" Then
+    
+        objSess.findById("wnd[0]").maximize
+        objSess.findById("wnd[0]/usr/cntlIMAGE_CONTAINER/shellcont/shell/shellcont[0]/shell").doubleClickNode "F00067"
+        objSess.findById("wnd[0]/usr/ctxt$1PERIB").text = "7"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").text = "#######"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").SetFocus
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").caretPosition = 8
+        objSess.findById("wnd[0]").sendVKey 8
+        objSess.findById("wnd[0]/usr/lbl[0,31]").SetFocus
+        objSess.findById("wnd[0]/usr/lbl[0,31]").caretPosition = 0
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]/tbar[1]/btn[14]").press
+        objSess.findById("wnd[1]/usr/ctxtLGRWO-OUT_FILE").text = "test_extract"
+        objSess.findById("wnd[1]/tbar[0]/btn[0]").press
+        objSess.findById("wnd[2]/usr/btnSPOP-VAROPTION2").press
+        objSess.findById("wnd[1]/usr/btnSPOP-VAROPTION1").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").Selected = False
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").SetFocus
+        objSess.findById("wnd[1]/usr/btnBUTTON_YES").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+
+    
+    ElseIf text = "#######" Then
+        
+        objSess.findById("wnd[0]").maximize
+        objSess.findById("wnd[0]/usr/cntlIMAGE_CONTAINER/shellcont/shell/shellcont[0]/shell").doubleClickNode "F00067"
+        objSess.findById("wnd[0]/usr/ctxt$1PERIB").text = "7"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").text = "#######"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").SetFocus
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").caretPosition = 8
+        objSess.findById("wnd[0]").sendVKey 8
+        objSess.findById("wnd[0]/usr/lbl[0,27]").SetFocus
+        objSess.findById("wnd[0]/usr/lbl[0,27]").caretPosition = 0
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]/tbar[1]/btn[14]").press
+        objSess.findById("wnd[1]/usr/ctxtLGRWO-OUT_FILE").text = "test_extract"
+        objSess.findById("wnd[1]/tbar[0]/btn[0]").press
+        objSess.findById("wnd[2]/usr/btnSPOP-VAROPTION2").press
+        objSess.findById("wnd[1]/usr/btnSPOP-VAROPTION1").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").Selected = False
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").SetFocus
+        objSess.findById("wnd[1]/usr/btnBUTTON_YES").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+  
+    
+    End If
+    
+
+Exit Sub
+    
+myerr:
+       MsgBox "Error occured while retrieving data", vbCritical + vbOKOnly
+        
+    
+    
+    ' End the GUI session
+    objSess.EndTransaction
+    
+End Sub
+
+'==================================================================
+'Calculate the number of item indicated in the Index CC_HSEQ sheet
+'==================================================================
+
+Sub NbItemCombo3(control As IRibbonControl, ByRef returnedVal3)
+    'Define the number of elements in the ComboBox
+    returnedVal3 = Sheets("CC_HSEQ").Range("A65536").End(xlUp).Row
+
+End Sub
+
+'====================================================================
+'Populate our HSEQ comboBox control with the CC_HSEQ values
+'====================================================================
+
+Sub ComboLabel3(control As IRibbonControl, index As Integer, ByRef returnedVal3)
+    
+    If Sheets("CC_HSEQ").Range("A65536").End(xlUp).Row = 0 Then Exit Sub
+    
+    returnedVal3 = Sheets("CC_HSEQ").Cells(index + 2, 1)
+End Sub
+
+'========================================================================================================
+'Extract the wanted form from SAP with the help of the SAP GUI script recorded by the SAP script recorder
+'========================================================================================================
+
+Sub ExtractHSEQ(control As IRibbonControl, text As String)
+    
+    ' Set the sid and client to connect to
+    W_System = "#######"
+    
+    Dim W_Ret As Boolean
+
+
+    ' Connect to SAP
+    W_Ret = Attach_Session
+    If Not W_Ret Then
+        Exit Sub
+    End If
+    
+    
+    On Error GoTo myerr
+    
+    '===========================================================
+    'SAP GUI Scripts for HSEQ extracts
+    '===========================================================
+    
+    If text = "#######" Then
+        objSess.findById("wnd[0]").maximize
+        objSess.findById("wnd[0]/usr/cntlIMAGE_CONTAINER/shellcont/shell/shellcont[0]/shell").doubleClickNode "F00067"
+        objSess.findById("wnd[0]/usr/ctxt$1PERIB").text = "7"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").text = "#######"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").SetFocus
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").caretPosition = 8
+        objSess.findById("wnd[0]").sendVKey 8
+        objSess.findById("wnd[0]/usr").verticalScrollbar.Position = 71
+        objSess.findById("wnd[0]/usr/lbl[0,42]").SetFocus
+        objSess.findById("wnd[0]/usr/lbl[0,42]").caretPosition = 0
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]/usr/lbl[0,36]").SetFocus
+        objSess.findById("wnd[0]/usr/lbl[0,36]").caretPosition = 0
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]/tbar[1]/btn[14]").press
+        objSess.findById("wnd[1]/usr/ctxtLGRWO-OUT_FILE").text = "test_extract"
+        objSess.findById("wnd[1]/tbar[0]/btn[0]").press
+        objSess.findById("wnd[2]/usr/btnSPOP-VAROPTION2").press
+        objSess.findById("wnd[1]/usr/btnSPOP-VAROPTION1").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").Selected = False
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").SetFocus
+        objSess.findById("wnd[1]/usr/btnBUTTON_YES").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+        
+
+    End If
+    
+    Exit Sub
+    
+myerr:
+       MsgBox "Error occured while retrieving data", vbCritical + vbOKOnly
+        
+    
+    
+    ' End the GUI session
+    objSess.EndTransaction
+    
+End Sub
+
+'=====================================================================
+'Calculate the number of item indicated in the Index CC_Wells sheet
+'=====================================================================
+
+Sub NbItemCombo4(control As IRibbonControl, ByRef returnedVal4)
+    'Define the number of elements in the ComboBox
+    returnedVal4 = Sheets("CC_Ekofisk").Range("A65536").End(xlUp).Row
+
+End Sub
+
+'====================================================================
+'Populate our Wells comboBox control with the CC_Wells values
+'====================================================================
+
+Sub ComboLabel4(control As IRibbonControl, index As Integer, ByRef returnedVal4)
+    
+    If Sheets("CC_Ekofisk").Range("A65536").End(xlUp).Row = 0 Then Exit Sub
+    
+    returnedVal4 = Sheets("CC_Ekofisk").Cells(index + 2, 1)
+End Sub
+
+
+'========================================================================================================
+'Extract the wanted form from SAP with the help of the SAP GUI script recorded by the SAP script recorder
+'========================================================================================================
+
+Sub ExtractWells(control As IRibbonControl, text As String)
+    
+    ' Set the sid and client to connect to
+    W_System = "#######"
+    
+    Dim W_Ret As Boolean
+
+
+    ' Connect to SAP
+    W_Ret = Attach_Session
+    If Not W_Ret Then
+        Exit Sub
+    End If
+    
+    
+    On Error GoTo myerr
+    
+
+    '===========================================================
+    'SAP GUI Scripts for Wells CC extracts
+    '===========================================================
+    
+    If text = "#######" Then
+        objSess.findById("wnd[0]").maximize
+        objSess.findById("wnd[0]/usr/cntlIMAGE_CONTAINER/shellcont/shell/shellcont[0]/shell").doubleClickNode "F00067"
+        objSess.findById("wnd[0]/usr/ctxt$1PERIB").text = "7"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").text = "#######"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").SetFocus
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").caretPosition = 8
+        objSess.findById("wnd[0]").sendVKey 8
+        objSess.findById("wnd[0]/usr").verticalScrollbar.Position = 93
+        objSess.findById("wnd[0]/usr/lbl[0,32]").SetFocus
+        objSess.findById("wnd[0]/usr/lbl[0,32]").caretPosition = 0
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]/tbar[1]/btn[14]").press
+        objSess.findById("wnd[1]/usr/ctxtLGRWO-OUT_FILE").text = "test_extract"
+        objSess.findById("wnd[1]/tbar[0]/btn[0]").press
+        objSess.findById("wnd[2]/usr/btnSPOP-VAROPTION2").press
+        objSess.findById("wnd[1]/usr/btnSPOP-VAROPTION1").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").Selected = False
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").SetFocus
+        objSess.findById("wnd[1]/usr/btnBUTTON_YES").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+
+    End If
+    
+    Exit Sub
+    
+myerr:
+       MsgBox "Error occured while retrieving data", vbCritical + vbOKOnly
+    
+    ' End the GUI session
+    objSess.EndTransaction
+    
+End Sub
+
+'=================================================================
+'Calculate the number of item indicated in the Index CC_Com sheet
+'=================================================================
+
+Sub NbItemCombo5(control As IRibbonControl, ByRef returnedVal5)
+    'Define the number of elements in the ComboBox
+    returnedVal5 = Sheets("CC_Com").Range("A65536").End(xlUp).Row
+
+End Sub
+
+'====================================================================
+'Populate our Commercial comboBox control with the CC_Com values
+'====================================================================
+
+Sub ComboLabel5(control As IRibbonControl, index As Integer, ByRef returnedVal5)
+    
+    If Sheets("CC_Com").Range("A65536").End(xlUp).Row = 0 Then Exit Sub
+    
+    returnedVal5 = Sheets("CC_Com").Cells(index + 2, 1)
+End Sub
+
+
+'========================================================================================================
+'Extract the wanted form from SAP with the help of the SAP GUI script recorded by the SAP script recorder
+'========================================================================================================
+
+Sub ExtractComm(control As IRibbonControl, text As String)
+    
+    ' Set the sid and client to connect to
+    W_System = "#######"
+    
+    Dim W_Ret As Boolean
+
+
+    ' Connect to SAP
+    W_Ret = Attach_Session
+    If Not W_Ret Then
+        Exit Sub
+    End If
+    
+    
+    On Error GoTo myerr
+    
+
+    '===========================================================
+    'SAP GUI Scripts for Commercial CC extracts
+    '===========================================================
+    
+    If text = "#######" Then
+        objSess.findById("wnd[0]").maximize
+        objSess.findById("wnd[0]/usr/cntlIMAGE_CONTAINER/shellcont/shell/shellcont[0]/shell").doubleClickNode "F00067"
+        objSess.findById("wnd[0]/usr/ctxt$1PERIB").text = "7"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").text = "#######"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").SetFocus
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").caretPosition = 8
+        objSess.findById("wnd[0]").sendVKey 8
+        objSess.findById("wnd[0]/usr").verticalScrollbar.Position = 87
+        objSess.findById("wnd[0]/usr/lbl[0,30]").SetFocus
+        objSess.findById("wnd[0]/usr/lbl[0,30]").caretPosition = 0
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]/tbar[1]/btn[14]").press
+        objSess.findById("wnd[1]/usr/ctxtLGRWO-OUT_FILE").text = "test_extract"
+        objSess.findById("wnd[1]/tbar[0]/btn[0]").press
+        objSess.findById("wnd[2]/usr/btnSPOP-VAROPTION2").press
+        objSess.findById("wnd[1]/usr/btnSPOP-VAROPTION1").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").Selected = False
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").SetFocus
+        objSess.findById("wnd[1]/usr/btnBUTTON_YES").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+
+    End If
+    
+    Exit Sub
+    
+myerr:
+       MsgBox "Error occured while retrieving data", vbCritical + vbOKOnly
+    
+    ' End the GUI session
+    objSess.EndTransaction
+    
+End Sub
+
+'================================================================
+'Calculate the number of item indicated in the Index CC_RD sheet
+'================================================================
+
+Sub NbItemCombo6(control As IRibbonControl, ByRef returnedVal6)
+    'Define the number of elements in the ComboBox
+    returnedVal6 = Sheets("CC_RD").Range("A65536").End(xlUp).Row
+
+End Sub
+
+'====================================================================
+'Populate our R&D comboBox control with the CC_R&D values
+'====================================================================
+
+Sub ComboLabel6(control As IRibbonControl, index As Integer, ByRef returnedVal6)
+    
+    If Sheets("CC_RD").Range("A65536").End(xlUp).Row = 0 Then Exit Sub
+    
+    returnedVal6 = Sheets("CC_RD").Cells(index + 2, 1)
+End Sub
+
+'========================================================================================================
+'Extract the wanted form from SAP with the help of the SAP GUI script recorded by the SAP script recorder
+'========================================================================================================
+
+Sub ExtractRD(control As IRibbonControl, text As String)
+    
+    ' Set the sid and client to connect to
+    W_System = "#######"
+    
+    Dim W_Ret As Boolean
+
+
+    ' Connect to SAP
+    W_Ret = Attach_Session
+    If Not W_Ret Then
+        Exit Sub
+    End If
+    
+    
+    On Error GoTo myerr
+    
+    '===========================================================
+    'SAP GUI Scripts for R&D CC extracts
+    '===========================================================
+    
+    If text = "#######" Then
+        objSess.findById("wnd[0]").maximize
+        objSess.findById("wnd[0]/usr/cntlIMAGE_CONTAINER/shellcont/shell/shellcont[0]/shell").doubleClickNode "F00067"
+        objSess.findById("wnd[0]/usr/ctxt$1PERIB").text = "7"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").text = "#######"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").SetFocus
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").caretPosition = 8
+        objSess.findById("wnd[0]").sendVKey 8
+        objSess.findById("wnd[0]/usr").verticalScrollbar.Position = 86
+        objSess.findById("wnd[0]/usr/lbl[0,39]").SetFocus
+        objSess.findById("wnd[0]/usr/lbl[0,39]").caretPosition = 0
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]/usr/lbl[0,36]").SetFocus
+        objSess.findById("wnd[0]/usr/lbl[0,36]").caretPosition = 0
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]/tbar[1]/btn[14]").press
+        objSess.findById("wnd[1]/usr/ctxtLGRWO-OUT_FILE").text = "test_extract"
+        objSess.findById("wnd[1]/tbar[0]/btn[0]").press
+        objSess.findById("wnd[2]/usr/btnSPOP-VAROPTION2").press
+        objSess.findById("wnd[1]/usr/btnSPOP-VAROPTION1").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").Selected = False
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").SetFocus
+        objSess.findById("wnd[1]/usr/btnBUTTON_YES").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+
+    End If
+    
+    Exit Sub
+    
+myerr:
+       MsgBox "Error occured while retrieving data", vbCritical + vbOKOnly
+    
+    ' End the GUI session
+    objSess.EndTransaction
+    
+End Sub
+
+'========================================================================
+'Calculate the number of item indicated in the Index CC_Exploration sheet
+'========================================================================
+
+Sub NbItemCombo7(control As IRibbonControl, ByRef returnedVal7)
+    'Define the number of elements in the ComboBox
+    returnedVal7 = Sheets("CC_Explo").Range("A65536").End(xlUp).Row
+
+End Sub
+
+'====================================================================
+'Populate our Exploration comboBox control with the CC_Explo values
+'====================================================================
+
+Sub ComboLabel7(control As IRibbonControl, index As Integer, ByRef returnedVal7)
+    
+    If Sheets("CC_Explo").Range("A65536").End(xlUp).Row = 0 Then Exit Sub
+    
+    returnedVal7 = Sheets("CC_Explo").Cells(index + 2, 1)
+End Sub
+
+'========================================================================================================
+'Extract the wanted form from SAP with the help of the SAP GUI script recorded by the SAP script recorder
+'========================================================================================================
+
+Sub ExtractExplo(control As IRibbonControl, text As String)
+    
+    ' Set the sid and client to connect to
+    W_System = "#######"
+    
+    Dim W_Ret As Boolean
+
+
+    ' Connect to SAP
+    W_Ret = Attach_Session
+    If Not W_Ret Then
+        Exit Sub
+    End If
+    
+    
+    On Error GoTo myerr
+    
+    '===========================================================
+    'SAP GUI Scripts for Exploration CC extracts
+    '===========================================================
+    
+    If text = "#######" Then
+        objSess.findById("wnd[0]").maximize
+        objSess.findById("wnd[0]/usr/cntlIMAGE_CONTAINER/shellcont/shell/shellcont[0]/shell").doubleClickNode "F00067"
+        objSess.findById("wnd[0]/usr/ctxt$1PERIB").text = "7"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").text = "#######"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").SetFocus
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").caretPosition = 8
+        objSess.findById("wnd[0]").sendVKey 8
+        objSess.findById("wnd[0]/usr").verticalScrollbar.Position = 73
+        objSess.findById("wnd[0]/usr/lbl[0,42]").SetFocus
+        objSess.findById("wnd[0]/usr/lbl[0,42]").caretPosition = 0
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]/usr/lbl[0,36]").SetFocus
+        objSess.findById("wnd[0]/usr/lbl[0,36]").caretPosition = 0
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]/tbar[1]/btn[14]").press
+        objSess.findById("wnd[1]/usr/ctxtLGRWO-OUT_FILE").text = "test_extract"
+        objSess.findById("wnd[1]/tbar[0]/btn[0]").press
+        objSess.findById("wnd[2]/usr/btnSPOP-VAROPTION2").press
+        objSess.findById("wnd[1]/usr/btnSPOP-VAROPTION1").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").Selected = False
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").SetFocus
+        objSess.findById("wnd[1]/usr/btnBUTTON_YES").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+    End If
+    
+    Exit Sub
+    
+myerr:
+       MsgBox "Error occured while retrieving data", vbCritical + vbOKOnly
+    
+    ' End the GUI session
+    objSess.EndTransaction
+    
+End Sub
+
+'==================================================================
+'Calculate the number of item indicated in the Index CC_tech sheet
+'==================================================================
+
+Sub NbItemCombo8(control As IRibbonControl, ByRef returnedVal8)
+    'Define the number of elements in the ComboBox
+    returnedVal8 = Sheets("CC_tech").Range("A65536").End(xlUp).Row
+
+End Sub
+
+'==========================================================================
+'Populate our technical services comboBox control with the CC_tech values
+'==========================================================================
+
+Sub ComboLabel8(control As IRibbonControl, index As Integer, ByRef returnedVal8)
+    
+    If Sheets("CC_tech").Range("A65536").End(xlUp).Row = 0 Then Exit Sub
+    
+    returnedVal8 = Sheets("CC_tech").Cells(index + 2, 1)
+End Sub
+
+'========================================================================================================
+'Extract the wanted form from SAP with the help of the SAP GUI script recorded by the SAP script recorder
+'========================================================================================================
+
+Sub ExtractTech(control As IRibbonControl, text As String)
+    
+    ' Set the sid and client to connect to
+    W_System = "#######"
+    
+    Dim W_Ret As Boolean
+
+
+    ' Connect to SAP
+    W_Ret = Attach_Session
+    If Not W_Ret Then
+        Exit Sub
+    End If
+    
+    
+    On Error GoTo myerr
+    
+    '===========================================================
+    'SAP GUI Scripts for technical services CC extracts
+    '===========================================================
+    
+    If text = "#######" Then
+        
+        objSess.findById("wnd[0]").maximize
+        objSess.findById("wnd[0]/usr/cntlIMAGE_CONTAINER/shellcont/shell/shellcont[0]/shell").doubleClickNode "F00067"
+        objSess.findById("wnd[0]/usr/ctxt$1PERIB").text = "7"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").text = "#######"
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").SetFocus
+        objSess.findById("wnd[0]/usr/ctxt_1KOSET-LOW").caretPosition = 8
+        objSess.findById("wnd[0]").sendVKey 8
+        objSess.findById("wnd[0]/usr").verticalScrollbar.Position = 91
+        objSess.findById("wnd[0]/usr/lbl[0,26]").SetFocus
+        objSess.findById("wnd[0]/usr/lbl[0,26]").caretPosition = 0
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]").sendVKey 2
+        objSess.findById("wnd[0]/tbar[1]/btn[14]").press
+        objSess.findById("wnd[1]/usr/ctxtLGRWO-OUT_FILE").text = "test_extract"
+        objSess.findById("wnd[1]/tbar[0]/btn[0]").press
+        objSess.findById("wnd[2]/usr/btnSPOP-VAROPTION2").press
+        objSess.findById("wnd[1]/usr/btnSPOP-VAROPTION1").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").Selected = False
+        objSess.findById("wnd[1]/usr/chkRGRWE-X_SAVE_EXTRACT").SetFocus
+        objSess.findById("wnd[1]/usr/btnBUTTON_YES").press
+        objSess.findById("wnd[0]/tbar[0]/btn[3]").press
+
+    End If
+    
+    Exit Sub
+    
+myerr:
+       MsgBox "Error occured while retrieving data", vbCritical + vbOKOnly
+    
+    ' End the GUI session
+    objSess.EndTransaction
+    
+End Sub
+
+
+

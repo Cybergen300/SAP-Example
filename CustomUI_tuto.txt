@@ -1,0 +1,56 @@
+<customUI 
+xmlns = "http://schemas.microsoft.com/office/2006/01/customui">
+	<ribbon startFromScratch = "false">
+		
+		<tabs>
+			<tab id ="Custom" label = "SAP Extract" visible= "true"> 
+				<!-- SAP Extract section --> 
+				<group id = "Extraction" label = "SAP Extraction">
+				<comboBox id = "Corpo" label = "Corp Affairs : " getItemCount = "NbItemCombo" onChange = 								"ExtractCorpo" getItemLabel = "ComboLabel" invalidateContentOnDrop = "true" />
+
+				<labelControl id="LC01" />
+
+				<comboBox id = "Fin" label = "Finance :"   getItemCount = "NbItemCombo1" onChange = 								"ExtractFin" getItemLabel = "ComboLabel1" invalidateContentOnDrop = "true" />
+				
+				<separator id = "Sep01" />
+
+				<comboBox id = "IS" label = "IS : " getItemCount = "NbItemCombo2" onChange = 								"ExtractIS" getItemLabel = "ComboLabel2" invalidateContentOnDrop = "true" />
+
+				<labelControl id="LC02" />
+
+				<comboBox id = "HSEQ" label = "HSEQ and Operations :"   getItemCount = "NbItemCombo3" onChange = 								"ExtractHSEQ" getItemLabel = "ComboLabel3" invalidateContentOnDrop = "true" />
+
+				<separator id = "Sep02" />
+
+				<comboBox id = "Wells" label = "Wells : " getItemCount = "NbItemCombo4" onChange = 								"ExtractWells" getItemLabel = "ComboLabel4" invalidateContentOnDrop = "true" />
+
+				<labelControl id="LC03" />
+
+				<comboBox id = "Commercial" label = "Commercial :"   getItemCount = "NbItemCombo5" onChange = 								"ExtractComm" getItemLabel = "ComboLabel5" invalidateContentOnDrop = "true" />
+
+				<separator id = "Sep03" />
+
+				<comboBox id = "RD" label = "Research and Development : " getItemCount = "NbItemCombo6" onChange = 								"ExtractRD" getItemLabel = "ComboLabel6" invalidateContentOnDrop = "true" />
+
+
+				<labelControl id="LC04" />
+
+				<comboBox id = "Explo" label = "Exploration :"   getItemCount = "NbItemCombo7" onChange = 								"ExtractExplo" getItemLabel = "ComboLabel7" invalidateContentOnDrop = "true" />
+
+
+				<separator id = "Sep04" />
+
+				<comboBox id = "Techn" label = "Technical services : " getItemCount = "NbItemCombo8" onChange = 								"ExtractTech" getItemLabel = "ComboLabel8" invalidateContentOnDrop = "true" />
+
+				</group>	
+				
+				<group id = "G02">
+				<button id = "UpdateVal" imageMso = "ArrangeByRecurrence" onAction = "UpdateCC" label = "Update CC values" size = "large" />
+				
+				</group>
+							
+			</tab>
+		</tabs>
+
+	</ribbon>
+</customUI>
